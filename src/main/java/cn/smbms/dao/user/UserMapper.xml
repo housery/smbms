@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.smbms.dao.user.UserMapper">
+
+    <!-- 查询用户表记录数 -->
+    <select id="count" resultType="int">
+        select count(1) as count
+        from smbms_user
+    </select>
+    <!-- 当数据库中的字段信息与对象的属性不一致时需要通过resultMap来映射 -->
+    <resultMap type="User" id="userList">
+        <result property="id" column="id"/>
+        <result property="userCode" column="userCode"/>
+        <result property="userName" column="userName"/>
+        <result property="phone" column="phone"/>
+        <result property="birthday" column="birthday"/>
+        <result property="gender" column="gender"/>
+        <result property="userRole" column="userRole"/>
+        <result property="userRoleName" column="roleName"/>
+        <result property="address" column="address"/>
+        <result property="createdBy" column="createdBy"/>
+        <result property="creationDate" column="creationDate"/>
+        <result property="modifyBy" column="modifyBy"/>
+        <result property="modifyDate" column="modifyDate"/>
+    </resultMap>
+
+
+    <!-- 查询用户列表(参数：对象入参) -->
+    <select id="getUserList" resultMap="userList">
+        select u.*, r.roleName
+        from smbms_user u, smbms_role r
+        where u.userRole = r.id
+        <if test="userName != null and userName != ''">
+            and u.userName like CONCAT('%', #{userName}, '%')
+        </if>
+        <if test="roleId != null and roleId != 0 ">
+            and u.userRole = #{roleId}
+        </if>
+        order by creationDate DESC limit #{from}, #{pageSize}
+    </select>
+
+    <!-- 查询用户列表(参数：Map) -->
+    <select id="getUserListByMap" resultType="User" parameterType="Map">
+        select *
+        from smbms_user
+        where userName like CONCAT('%', #{uName}, '%') and userRole = #{uRole}
+    </select>
+
+    <!-- 增加用户 -->
+    <insert id="add" parameterType="User">
+        insert into smbms_user (userCode, userName, userPassword, gender, birthday, phone,
+                                address, userRole, createdBy, creationDate, idPicPath)
+        values (#{userCode}, #{userName}, #{userPassword}, #{gender}, #{birthday}, #{phone},
+                #{address}, #{userRole}, #{createdBy}, #{creationDate}, #{idPicPath})
+    </insert>
+
+    <!-- 修改用户信息 -->
+    <update id="modify" parameterType="User">
+        update smbms_user
+        <set>
+            <if test="userCode != null">userCode = #{userCode},</if>
+            <if test="userName != null">userName = #{userName},</if>
+            <if test="userPassword != null">userPassword = #{userPassword},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="birthday != null">birthday = #{birthday},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="userRole != null">userRole = #{userRole},</if>
+            <if test="modifyBy != null">modifyBy = #{modifyBy},</if>
+            <if test="modifyDate != null">modifyDate = #{modifyDate}</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!-- 修改当前用户密码 -->
+    <update id="updatePwd">
+        update smbms_user
+        set userPassword = #{userPassword}
+        where id = #{id}
+    </update>
+
+    <!-- 根据userId删除用户信息 -->
+    <delete id="deleteUserById" parameterType="String">
+        delete from smbms_user
+        where id = #{id}
+    </delete>
+
+    <!--获取登录用户-->
+    <select id="getLoginUser" parameterType="String" resultType="User">
+        select * from smbms_user where userCode = #{userCode}
+    </select>
+
+    <!--通过条件查询用户表记录数-->
+    <select id="getUserCount" resultType="Int">
+        select COUNT(1) from smbms_user u,smbms_role r
+            where u.userRole = r.id
+            <if test="userName != null and userName != '' ">
+                and u.userName like concat('%', #{userName}, '%')
+            </if>
+            <if test="userRole != null and userRole != 0">
+                and u.userRole = #{userRole}
+            </if>
+    </select>
+
+    <select id="getUserById" parameterType="String" resultMap="userList">
+        select u.*, r.roleName
+        from smbms_user u, smbms_role r where u.userRole = r.id and u.id = #{id}
+    </select>
+</mapper>

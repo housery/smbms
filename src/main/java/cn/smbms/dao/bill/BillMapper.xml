@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.smbms.dao.bill.BillMapper">
+
+    <resultMap id="billList" type="Bill">
+        <result property="billCode" column="billCode"/>
+        <result property="productName" column="productName"/>
+        <!--供应商名-->
+        <result property="providerName" column="proName"/>
+        <result property="totalPrice" column="totalPrice"/>
+        <result property="isPayment" column="isPayment"/>
+        <result property="creationDate" column="creationDate"/>
+    </resultMap>
+    <!--动态sql,根据供应商id。商品名称（模糊查询），是否付款查询-->
+    <select id="getBillList"  resultMap="billList">
+        select b.*, p.proName from smbms_bill b , smbms_provider p
+        where b.providerId = p.id
+        <if test="productName != null and productName !='' ">
+            and b.productName like concat('%', #{productName}, '%')
+        </if>
+        <if test="isPayment != null and isPayment !='' ">
+            and b.isPayment = #{isPayment}
+        </if>
+        <if test="providerId != null and providerId !='' ">
+            and p.id = #{providerId}
+        </if>
+        ORDER BY creationDate DESC LIMIT #{from}, #{pageSize}
+    </select>
+
+    <!--association-->
+    <resultMap id="BillListByProvideId" type="Bill">
+        <id property="id" column="id"/>
+        <result property="billCode" column="billCode"/>
+        <result property="totalPrice" column="totalPrice"/>
+        <result property="isPayment" column="isPayment"/>
+        <result property="productName" column="productName"/>
+        <!--供应商，一定要按照顺序，association放在最后-->
+        <association property="provider" javaType="Provider">
+            <!--供应商id p_id 为表中的字段，再sql中需要起别名和他保持一致-->
+            <id property="id" column="p_id"/>
+            <result property="proCode" column="proCode"/>
+            <result property="proName" column="proName"/>
+            <result property="proContact" column="proContact"/>
+            <result property="proPhone" column="proPhone"/>
+
+        </association>
+    </resultMap>
+
+    <select id="getBillListByProviderId"  resultMap="BillListByProvideId">
+        select b.*, p.*, p.id as p_id from smbms_bill b , smbms_provider p
+        where b.productName like concat('%', #{productName}, '%')
+              and b.isPayment = #{isPayment} and p.id = #{providerId} and b.providerId = p.id;
+    </select>
+
+    <!--添加订单-->
+    <insert id="add" parameterType="Bill">
+        insert into smbms_bill(billCode, productName, productDesc, productUnit, productCount, totalPrice,
+                               isPayment, createdBy, creationDate, modifyBy, modifyDate, providerId)
+                values (#{billCode}, #{productName}, #{productDesc}, #{productUnit}, #{productCount}, #{totalPrice},
+                        #{isPayment}, #{createdBy}, #{creationDate}, #{modifyBy}, #{modifyDate}, #{providerId})
+    </insert>
+
+    <!--删除订单根据id-->
+    <delete id="deleteBillById" parameterType="String">
+        delete from smbms_bill where id = #{delId}
+    </delete>
+
+    <!--根据订单ID获取订单列表-->
+    <select id="getBillById"  resultMap="billList">
+        select b.* from smbms_bill b where b.id = #{id}
+    </select>
+
+    <!--修改订单-->
+    <update id="modify" parameterType="Bill">
+        update smbms_bill
+        <set>
+            <if test="billCode != null">billCode = #{billCode},</if>
+            <if test="productName != null">productName = #{productName},</if>
+            <if test="productDesc != null">productDesc = #{productDesc},</if>
+            <if test="productUnit != null">productUnit = #{productUnit},</if>
+            <if test="productCount != null">productCount = #{productCount},</if>
+            <if test="totalPrice != null">totalPrice = #{totalPrice},</if>
+            <if test="isPayment != null">isPayment = #{isPayment},</if>
+            <if test="createdBy != null">createdBy = #{createdBy},</if>
+            <if test="creationDate != null">creationDate = #{creationDate},</if>
+            <if test="modifyBy != null">modifyBy = #{modifyBy},</if>
+            <if test="modifyDate != null">modifyDate = #{modifyDate},</if>
+            <if test="providerId != null">providerId = #{providerId},</if>
+            <if test="providerId != null">providerId = #{providerId},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--获取订单数-->
+    <select id="getBillCount" resultType="int">
+        select count(1) from smbms_bill b
+        <where>
+            <if test="providerId != null and providerId !='' ">
+                and b.providerId = #{providerId}
+            </if>
+            <if test="productName != null and productName !='' ">
+                and b.productName = #{productName}
+            </if>
+            <if test="isPayment != null and isPayment !='' ">
+                and b.isPayment = #{isPayment}
+            </if>
+        </where>
+    </select>
+
+    <!--根据供应商id获取订单列表-->
+    <select id="getBillCountByProviderId" resultType="int">
+        select COUNT(1) from smbms_bill
+        where providerId = #{providerId};
+    </select>
+</mapper>

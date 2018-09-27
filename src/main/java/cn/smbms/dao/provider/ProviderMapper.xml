@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.smbms.dao.provider.ProviderMapper">
+    <!--查询供应商数量-->
+    <select id="count" resultType="int">
+        select count(1) from smbms_provider
+    </select>
+
+    <!--获取供应商列表-->
+    <select id="getProviderList" resultType="Provider">
+        select * from smbms_provider provider
+        <where>
+            <if test="proName != null and proName != '' ">
+                and proName like CONCAT('%', #{proName}, '%')
+            </if>
+            <if test="proCode != null and proCode != '' ">
+                and proCode like CONCAT('%', #{proCode}, '%')
+            </if>
+        </where>
+        <if test="pageSize != 0">
+            ORDER BY creationDate DESC LIMIT #{from}, #{pageSize}
+        </if>
+    </select>
+
+    <!--添加供应商-->
+    <insert id="add" parameterType="Provider">
+        insert into smbms_provider (proCode, proName, proDesc, proContact,
+                                    proPhone, proAddress, proFax, createdBy,
+                                    creationDate, modifyDate, modifyBy, companyLicPicPath)
+        VALUES (#{proCode}, #{proName}, #{proDesc},  #{proContact},
+                #{proPhone},  #{proAddress}, #{proFax}, #{createdBy},
+                #{creationDate}, #{modifyDate}, #{modifyBy}, #{companyLicPicPath})
+    </insert>
+
+    <!--修改供应商-->
+    <update id="modify" parameterType="Provider">
+        update smbms_provider
+        <set>
+            <if test="proCode != null">proCode = #{proCode},</if>
+            <if test="proName != null">proName = #{proName},</if>
+            <if test="proDesc != null">proDesc = #{proDesc},</if>
+            <if test="proContact != null">proContact = #{proContact},</if>
+            <if test="proPhone != null">proPhone = #{proPhone},</if>
+            <if test="proAddress != null">proAddress = #{proAddress},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--删除供应商-->
+    <delete id="deleteProviderById" parameterType="String">
+        delete from smbms_provider where id = #{delId}
+    </delete>
+
+    <!--根据供应商id获取供应商下边的订单列表-->
+    <resultMap id="providerBillRes" type="Provider">
+        <result property="id" column="id"/>
+        <result property="proCode" column="proCode"/>
+        <result property="proName" column="proName"/>
+        <result property="proContact" column="proContact"/>
+        <result property="proPhone" column="proPhone"/>
+        <!--订单列表 ofType为订单Bill-->
+        <collection property="billList" ofType="Bill">
+            <result property="billCode" column="billCode"/>
+            <result property="productName" column="productName"/>
+            <result property="totalPrice" column="totalPrice"/>
+            <result property="isPayment" column="isPayment"/>
+        </collection>
+    </resultMap>
+    <select id="getBillListByProviderId" resultMap="providerBillRes">
+        select provider.id, provider.proCode, provider.proName, provider.proContact, provider.proPhone,
+            bill.billCode, bill.productName, bill.totalPrice, bill.isPayment
+        from smbms_provider as provider, smbms_bill as bill
+        <if test="providerId != null and providerId != ''">
+            where provider.id = #{providerId}
+        </if>
+    </select>
+
+    <!--根据供应商ID获取供应商-->
+    <select id="getProviderById" resultType="Provider" parameterType="String">
+        select * from smbms_provider where id = #{id}
+    </select>
+
+    <!--获取供应商数量-->
+    <select id="getProCount" resultType="Int">
+        select count(1) from smbms_provider p
+        <where>
+            <if test="proName != null and proName !='' ">
+                p.proName = #{proName}
+            </if>
+            <if test="proCode != null and proCode !='' ">
+                and p.proCode = #{proCode}
+            </if>
+        </where>
+    </select>
+</mapper>
